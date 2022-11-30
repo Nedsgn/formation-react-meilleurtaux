@@ -1,13 +1,16 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import { Header } from './components/Header/Header'
+import { useState, useMemo } from 'react'
 import './App.css'
-import { currencyFormatter, dateFormatter } from './helpers/Formatters'
+
+import { AccountList } from './components/Account/AccountList'
+import { AccountDetail } from './components/Account/AccountDetail'
+import { useAccountSort } from './hooks/useAccountSort'
 
 function App() {
   const [count, setCount] = useState(0)
+  const [selectedAccount, setSelectedAccount] = useState(null)
+  const {sortField, sortIcon, sortFn, changeSort} = useAccountSort();
 
-  const tableauData = [{
+  const accountsData = [{
     "id": 1,
     "name": "Principal",
     "balance": 500,
@@ -25,37 +28,48 @@ function App() {
     lastOperationDate: '2022-09-03'
   }
 ];
-const [tableau, setTableau] = useState(tableauData);
+const [accounts, setAccounts] = useState(accountsData);
 
- const addAmount = (id) => {
-  const account = tableau.find(account => account.id === id);
+const addAmount = (id) => {
+  const account = accounts.find(account => account.id === id);
   account.balance += 10;
-  setTableau([...tableau]);
+  setAccounts([...accounts]);
  }
 
+ const increment = () => {
+  setCount((previous) => previous + 1);
+  setCount((previous) => previous + 1);
+ }
+
+ const addAccount = () => {
+  setAccounts([...accounts, {id: 99, name: 'test', balance: 0, lastOperationDate: null}]);
+ }
+
+ const selectAccount = id => {
+  const account = accounts.find(account => account.id === id);
+  setSelectedAccount(account ?? null);
+ }
+
+ const expensiveMethod = () => {
+  let i = 0;
+  for(i=0;i<999999999;i++) { }
+  return accounts.length;
+}
+const result = useMemo(() => expensiveMethod(), [accounts])
+console.log(sortField, sortIcon, sortFn, changeSort)
   return (
     <div className="App">
-      <h1>Formation React</h1>
-      <table>
-        <thead>
-          <tr>
-            <th>Nom</th>
-            <th>Solde</th>
-            <th>Date de dernière opération</th>
-          </tr>
-        </thead>
-      <tbody>
-        {tableau
-        .sort((accountA, accountB) => Date.parse(accountB.lastOperationDate) - Date.parse(accountA.lastOperationDate))
-        .map(({id, name, balance, lastOperationDate}, index) => (
-        <tr key={id} data-ispair={index %2 === 0 ? 'pair' : null} onClick={() => addAmount(id)}>
-          <td>{name}</td>
-          <td>{currencyFormatter.format(balance)}</td>
-          <td>{dateFormatter.format(Date.parse(lastOperationDate))}</td>
-          </tr>)
-          )}
-        </tbody>
-        </table>
+      <h1 onClick={() => selectAccount(null)}>Formation React</h1>
+      <h2>{result}</h2>
+      <button onClick={increment}>{count}</button>
+      <div>{JSON.stringify(selectAccount)}</div>
+      {selectedAccount ? (
+      <AccountDetail {...selectedAccount} />
+      )
+    : (
+      <AccountList accounts={accounts} selectAccount={selectAccount} changeSort={changeSort} addAccount={addAccount} sortField={sortField}
+      sortIcon={sortIcon} sortFn={sortFn}/>
+    )}
     </div>
   )
 }
